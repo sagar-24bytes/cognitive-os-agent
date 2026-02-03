@@ -145,6 +145,8 @@ env.bak/
 venv.bak/
 # vosk model
 voice/models/
+# .env file
+.env
 
 
 # Spyder project settings
