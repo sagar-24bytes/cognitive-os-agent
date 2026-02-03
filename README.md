@@ -20,7 +20,7 @@ Personal Cognitive OS listens to natural language voice commands and:
 ---
 
 ## Core Architecture
-
+```text
 Voice (Vosk)
 ↓
 Planner (Gemini + Structured Output)
@@ -30,7 +30,7 @@ Plan Normalizer / Grounder
 Executor (Local Tools)
 ↓
 Memory + Reflection (WIP)
-
+```
 
 ---
 
@@ -70,7 +70,7 @@ System generates:
 
 Then executes locally.
 
-**Tech Stack**
+## Tech Stack
 
 - Python 3.11+
 
@@ -88,29 +88,29 @@ Then executes locally.
 
 - Vision
 
-This project aims to become a personal autonomous operating system layer:
+### This project aims to become a personal autonomous operating system layer:
 
-self-improving agent
+- self-improving agent
 
-long-term memory
+- long-term memory
 
-reflection loops
+- reflection loops
 
-tool learning
+- tool learning
 
-minimal human micromanagement
+- minimal human micromanagement
 
-Inspired by:
+### Inspired by:
 
-AutoGPT
+- AutoGPT
 
-BabyAGI
+- BabyAGI
 
-OpenAI function calling
+- OpenAI function calling
 
-Cognitive architectures
+- Cognitive architectures
 
-Status
+## Status
 
-Actively under development.
-Memory, reflection, and self-correction layers are currently being built.
+- Actively under development.
+- Memory, reflection, and self-correction layers are currently being built.
