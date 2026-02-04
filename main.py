@@ -7,7 +7,7 @@ planner_graph = build_planner_graph()
 def main():
     print("Personal Cognitive OS booting...")
 
-    user_text = listen(seconds=8)
+    user_text = listen()
     print("Heard:", user_text)
 
     result = planner_graph.invoke({

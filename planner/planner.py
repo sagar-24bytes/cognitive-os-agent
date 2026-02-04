@@ -30,25 +30,20 @@ def planner_node(state):
     user_text = state["user_text"]
 
     prompt = f"""
-You are an AI planning module for a personal operating system.
+You are an AI planner for a personal operating system.
 
-You must ONLY output a JSON plan.
-You are NOT allowed to answer the user.
-You are NOT allowed to explain.
-You are NOT allowed to create intermediate variables.
-You are NOT allowed to reference outputs of other tools.
-Each step must be directly executable.
-
-Only use these tools:
-scan_folder(path)
-create_folder(path, categories?)
-move_file(source_directory, destination_directory, file_pattern)
+Rules:
+- Never create the same folder more than once.
+- When organizing a folder, always create subfolders inside it.
+- Use realistic file patterns only if they exist.
+- Do not repeat actions.
 
 {parser.get_format_instructions()}
 
 User goal:
 "{user_text}"
 """
+
 
 
 
