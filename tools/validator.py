@@ -1,6 +1,7 @@
 from tools.registry import ALLOWED_TOOLS
 from tools.normalizer import TOOL_MAPPING, ARG_MAPPING
 from memory.path_resolver import resolve_path_from_text
+import os
 
 
 def validate_plan_node(state):
@@ -8,14 +9,16 @@ def validate_plan_node(state):
     user_text = state["user_text"]
     validated_steps = []
 
-    # ---- WORLD MODEL RESOLUTION ----
+    # =================================================
+    # 🌍 WORLD MODEL RESOLUTION (AUTHORITATIVE PATH)
+    # =================================================
     resolved_path = resolve_path_from_text(user_text)
 
     for step in plan.get("steps", []):
         tool = step.get("tool")
-        args = step.get("args", {})
+        args = step.get("args", {}).copy()
 
-        # ---- REMOVE SYMBOLIC / FAKE VARIABLES ----
+        # ---- REMOVE SYMBOLIC / TEMPLATE VARIABLES ----
         for k, v in list(args.items()):
             if isinstance(v, str) and "{{" in v:
                 del args[k]
@@ -34,45 +37,90 @@ def validate_plan_node(state):
             for old, new in ARG_MAPPING[tool].items():
                 if old in args:
                     args[new] = args.pop(old)
-        # ---- SPLIT source_path GLOB INTO DIR + PATTERN ----
-        if tool == "move_file" and "source_directory" in args:
-            src = args["source_directory"]
-            if "*" in src:
-                import os
-                args["source_directory"] = os.path.dirname(src)
-                args["file_pattern"] = os.path.basename(src)
 
-
-        # ---- PATH GROUNDING ----
+        # =================================================
+        # 🔒 PATH GROUNDING — SINGLE SOURCE OF TRUTH
+        # =================================================
         if resolved_path:
-            for key in ("path", "directory", "source_directory", "destination_directory"):
-                if key in args:
-                    args[key] = resolved_path
+            if tool in ("scan_folder", "create_folder"):
+                args["path"] = resolved_path
 
-        step["tool"] = tool
-        step["args"] = args
-        validated_steps.append(step)
-        # ---- AUTO-ORGANIZATION RULES ----
+            elif tool == "move_file":
+                args["source_directory"] = resolved_path
+
+        # =================================================
+        # 🧠 AUTO FILE-TYPE ORGANIZATION (FINAL, CORRECT)
+        # =================================================
         if tool == "move_file":
-            pattern = args.get("file_pattern", "")
+            src = resolved_path
 
-            if pattern.endswith(".log"):
-                args["destination_directory"] = os.path.join(
-                    args["source_directory"], "logs"
-                )
+            file_groups = {
+                "*.pdf": "documents",
+                "*.png": "images",
+                "*.jpg": "images",
+                "*.jpeg": "images",
+                "*.mp4": "videos",
+                "*.mkv": "videos",
+            }
 
-            elif pattern.endswith(".txt"):
-                args["destination_directory"] = os.path.join(
-                    args["source_directory"], "results"
-                )
+            # ---- typed moves ----
+            for pattern, folder in file_groups.items():
+                dest = os.path.join(src, folder)
 
-            elif pattern.endswith(".json"):
-                args["destination_directory"] = os.path.join(
-                    args["source_directory"], "configs"
-                )
+                validated_steps.append({
+                    "tool": "create_folder",
+                    "args": {"path": dest}
+                })
 
+                validated_steps.append({
+                    "tool": "move_file",
+                    "args": {
+                        "source_directory": src,
+                        "destination_directory": dest,
+                        "file_pattern": pattern
+                    }
+                })
 
-    # ---- DEDUPLICATION (CRITICAL FIX) ----
+            # ---- FINAL POLISH: fallback only if files remain ----
+            remaining_files = [
+                f for f in os.listdir(src)
+                if os.path.isfile(os.path.join(src, f))
+            ]
+
+            if remaining_files:
+                other_dest = os.path.join(src, "others")
+
+                validated_steps.append({
+                    "tool": "create_folder",
+                    "args": {"path": other_dest}
+                })
+
+                validated_steps.append({
+                    "tool": "move_file",
+                    "args": {
+                        "source_directory": src,
+                        "destination_directory": other_dest,
+                        "file_pattern": "*"
+                    }
+                })
+
+            # IMPORTANT: do not add original move_file step
+            continue
+
+        # =================================================
+        # 🚫 SKIP USELESS ROOT RECREATION
+        # =================================================
+        if tool == "create_folder" and args.get("path") == resolved_path:
+            continue
+
+        validated_steps.append({
+            "tool": tool,
+            "args": args
+        })
+
+    # =================================================
+    # ♻️ DEDUPLICATION
+    # =================================================
     unique_steps = []
     seen = set()
 

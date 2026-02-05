@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+import fnmatch
 
 def resolve_path(path):
     path = os.path.expanduser(path)
@@ -24,23 +25,39 @@ def create_folder(path, categories=None):
         os.makedirs(path, exist_ok=True)
         print(f"Created folder: {path}")
 
-def move_file(source_directory, destination_directory, file_pattern):
-    import glob, shutil, os
 
+
+def move_file(source_directory, destination_directory, file_pattern):
     source_directory = os.path.abspath(os.path.expanduser(source_directory))
     destination_directory = os.path.abspath(os.path.expanduser(destination_directory))
 
-    files = glob.glob(os.path.join(source_directory, file_pattern))
+    # 🔧 FINAL POLISH: sanitize pattern from LLM / speech noise
+    file_pattern = "".join(file_pattern.split()).lower()
+
+    files = [
+        f for f in os.listdir(source_directory)
+        if os.path.isfile(os.path.join(source_directory, f))
+        and fnmatch.fnmatch(f.lower(), file_pattern)
+    ]
 
     if not files:
         print(f"No files found matching {file_pattern}")
-        return  # <--- THIS LINE IS THE IMPORTANT PART
+        return
 
     os.makedirs(destination_directory, exist_ok=True)
 
     for f in files:
-        shutil.move(f, destination_directory)
-        print(f"Moved {os.path.basename(f)} → {destination_directory}")
+        shutil.move(
+            os.path.join(source_directory, f),
+            os.path.join(destination_directory, f)
+        )
+        print(f"Moved {f} → {destination_directory}")
+
+
+
+
+
+
 
 
 

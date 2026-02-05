@@ -32,24 +32,22 @@ def planner_node(state):
     prompt = f"""
 You are an AI planning module for a personal operating system.
 
-Rules:
-- Output ONLY valid JSON.
-- Do NOT invent tools.
-- Use ONLY these tools:
-  - scan_folder
-  - create_folder
-  - move_file
+You must ONLY output a JSON plan.
+You must NOT explain or chat.
 
-When organizing a folder:
-1. First scan the folder
-2. Create meaningful subfolders if needed
-3. Move files based on filename patterns or extensions
+Rules:
+- If organizing a folder, ALWAYS:
+  1. scan the folder
+  2. create required subfolders FIRST
+  3. then move files into those subfolders
+- Never create a folder that already exists unless it is a subfolder.
 
 {parser.get_format_instructions()}
 
 User goal:
 "{user_text}"
 """
+
 
 
 
