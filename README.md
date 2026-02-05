@@ -21,25 +21,30 @@ Personal Cognitive OS listens to natural language voice commands and:
 
 ## Core Architecture
 ```text
-Voice (Vosk)
+Voice (Whisper – local, offline)
 ↓
 Planner (Gemini + Structured Output)
 ↓
 Plan Normalizer / Grounder
 ↓
-Executor (Local Tools)
+Executor (Defensive Local Tools)
 ↓
 Memory + Reflection (WIP)
+
 ```
 
 ---
 
 ## Current Features
 
-- 🎙️ Offline voice recognition (Vosk)
+- Whisper (offline, local speech recognition)
+
 - 🧠 LLM-based goal planner (Gemini)
 - 📋 Structured JSON planning (Pydantic)
 - 🔧 Tool normalization & argument grounding
+- 🛡️ Defensive tool execution (safe handling of no-op and invalid plans)
+- 🧭 OS-safe path grounding (LLM never executes raw paths)
+
 - 🧪 Dry-run execution mode
 - ⚙️ Real system execution layer
 
@@ -74,7 +79,8 @@ Then executes locally.
 
 - Python 3.11+
 
-- Vosk (offline speech recognition)
+- 🎙️ Offline, high-accuracy voice recognition (Whisper – local)
+
 
 - LangGraph
 
@@ -112,5 +118,6 @@ Then executes locally.
 
 ## Status
 
-- Actively under development.
+- Actively under development with stable end-to-end voice → action pipeline.
+  
 - Memory, reflection, and self-correction layers are currently being built.
