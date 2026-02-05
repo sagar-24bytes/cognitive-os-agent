@@ -30,19 +30,27 @@ def planner_node(state):
     user_text = state["user_text"]
 
     prompt = f"""
-You are an AI planner for a personal operating system.
+You are an AI planning module for a personal operating system.
 
 Rules:
-- Never create the same folder more than once.
-- When organizing a folder, always create subfolders inside it.
-- Use realistic file patterns only if they exist.
-- Do not repeat actions.
+- Output ONLY valid JSON.
+- Do NOT invent tools.
+- Use ONLY these tools:
+  - scan_folder
+  - create_folder
+  - move_file
+
+When organizing a folder:
+1. First scan the folder
+2. Create meaningful subfolders if needed
+3. Move files based on filename patterns or extensions
 
 {parser.get_format_instructions()}
 
 User goal:
 "{user_text}"
 """
+
 
 
 

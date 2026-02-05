@@ -147,6 +147,10 @@ venv.bak/
 voice/models/
 # .env file
 .env
+# Temporary audio recordings
+recorded.wav
+*.wav
+
 
 
 # Spyder project settings

@@ -24,9 +24,9 @@ def validate_plan_node(state):
         if tool in TOOL_MAPPING:
             tool = TOOL_MAPPING[tool]
 
-        # ---- TOOL GROUNDING ----
+        # ---- TOOL SAFETY GATE ----
         if tool not in ALLOWED_TOOLS:
-            print(f"Unknown tool: {tool}, skipping")
+            print(f"Blocked unsupported tool: {tool}")
             continue
 
         # ---- ARG NORMALIZATION ----
@@ -34,21 +34,53 @@ def validate_plan_node(state):
             for old, new in ARG_MAPPING[tool].items():
                 if old in args:
                     args[new] = args.pop(old)
+        # ---- SPLIT source_path GLOB INTO DIR + PATTERN ----
+        if tool == "move_file" and "source_directory" in args:
+            src = args["source_directory"]
+            if "*" in src:
+                import os
+                args["source_directory"] = os.path.dirname(src)
+                args["file_pattern"] = os.path.basename(src)
 
-        # ---- PATH GROUNDING (THIS IS THE KEY FIX) ----
+
+        # ---- PATH GROUNDING ----
         if resolved_path:
-            if "path" in args:
-                args["path"] = resolved_path
-            if "directory" in args:
-                args["directory"] = resolved_path
-            if "source_directory" in args:
-                args["source_directory"] = resolved_path
-            if "destination_directory" in args:
-                args["destination_directory"] = resolved_path
+            for key in ("path", "directory", "source_directory", "destination_directory"):
+                if key in args:
+                    args[key] = resolved_path
 
         step["tool"] = tool
         step["args"] = args
         validated_steps.append(step)
+        # ---- AUTO-ORGANIZATION RULES ----
+        if tool == "move_file":
+            pattern = args.get("file_pattern", "")
 
-    plan["steps"] = validated_steps
+            if pattern.endswith(".log"):
+                args["destination_directory"] = os.path.join(
+                    args["source_directory"], "logs"
+                )
+
+            elif pattern.endswith(".txt"):
+                args["destination_directory"] = os.path.join(
+                    args["source_directory"], "results"
+                )
+
+            elif pattern.endswith(".json"):
+                args["destination_directory"] = os.path.join(
+                    args["source_directory"], "configs"
+                )
+
+
+    # ---- DEDUPLICATION (CRITICAL FIX) ----
+    unique_steps = []
+    seen = set()
+
+    for step in validated_steps:
+        key = (step["tool"], tuple(sorted(step["args"].items())))
+        if key not in seen:
+            seen.add(key)
+            unique_steps.append(step)
+
+    plan["steps"] = unique_steps
     return {"plan": plan}

@@ -8,17 +8,24 @@ TOOL_MAPPING = {
 }
 
 ARG_MAPPING = {
-    "create_folder": {
-        "folder_name": "path",
-        "directory": "path"
-    },
     "scan_folder": {
-        "directory": "path"
+        "folder_path": "path",
+        "directory": "path",
+        "path": "path",
+    },
+    "create_folder": {
+        "folder_path": "path",
+        "directory": "path",
+        "path": "path",
     },
     "move_file": {
-        "source_files": "source_directory",
-        "directory": "source_directory",
-        "dest": "destination_directory",
-        "pattern": "file_pattern"
+        "source_path": "source_directory",
+        "source_directory": "source_directory",
+        "destination_path": "destination_directory",
+        "destination_directory": "destination_directory",
+        "pattern": "file_pattern",
+        "file_pattern": "file_pattern",
     }
 }
+
+
