@@ -52,6 +52,17 @@ def move_file(source_directory, destination_directory, file_pattern):
             os.path.join(destination_directory, f)
         )
         print(f"Moved {f} → {destination_directory}")
+def open_folder(path):
+    import os
+    path = os.path.abspath(os.path.expanduser(path))
+
+    if not os.path.exists(path):
+        print(f"Folder not found: {path}")
+        return
+
+    os.startfile(path)
+    print(f"Opened folder: {path}")
+
 
 
 

@@ -1,7 +1,24 @@
+# tools/registry.py
+
+from tools.actions import (
+    scan_folder,
+    create_folder,
+    move_file,
+    open_folder,
+)
+
+# 🔒 Single source of truth for allowed tools
 ALLOWED_TOOLS = {
-    "scan_folder": ["path"],
-    "create_folder": ["path", "categories"],
-    "move_file": ["source_directory", "destination_directory", "category_mapping"],
-    "open_app": ["name"],
-    "start_timer": ["minutes"]
+    "scan_folder",
+    "create_folder",
+    "move_file",
+    "open_folder",
+}
+
+# 🧰 Tool name → function mapping used by executor
+TOOL_FUNCTIONS = {
+    "scan_folder": scan_folder,
+    "create_folder": create_folder,
+    "move_file": move_file,
+    "open_folder": open_folder,
 }
