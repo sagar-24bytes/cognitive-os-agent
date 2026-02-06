@@ -1,5 +1,6 @@
 import os
-import re
+from memory.context import context
+
 
 KNOWN_FOLDERS = {
     "agent test folder": "B:/agent_test",
@@ -8,16 +9,23 @@ KNOWN_FOLDERS = {
     "documents": os.path.expanduser("~/Documents"),
 }
 
+
 def resolve_path_from_text(text: str | None):
     if not text:
         return None
 
     text = text.lower().strip()
 
-    # Exact semantic matches first
+    # -------------------------------------------------
+    # 1️⃣ Explicit semantic resolution (authoritative)
+    # -------------------------------------------------
     for key, path in KNOWN_FOLDERS.items():
         if key in text:
-            return os.path.abspath(path)
+            resolved = os.path.abspath(path)
+            context.last_path = resolved  # ✅ store safely
+            return resolved
 
-    # If no known folder is mentioned, DO NOT guess
-    return None
+    # -------------------------------------------------
+    # 2️⃣ Memory fallback (ONLY when explicitly needed)
+    # -------------------------------------------------
+    return getattr(context, "last_path", None)

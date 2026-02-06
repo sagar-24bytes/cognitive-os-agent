@@ -9,10 +9,18 @@ def validate_plan_node(state):
     user_text = state["user_text"]
     validated_steps = []
 
+    resolved_path = resolve_path_from_text(user_text)
+
+    # 🚨 HARD STOP: no path, no file ops
+    if not resolved_path:
+        print("❓ No folder resolved — skipping execution")
+        plan["steps"] = []
+        return {"plan": plan}
+
     # =================================================
     # 🌍 WORLD MODEL RESOLUTION (AUTHORITATIVE PATH)
     # =================================================
-    resolved_path = resolve_path_from_text(user_text)
+    
 
     for step in plan.get("steps", []):
         tool = step.get("tool")
