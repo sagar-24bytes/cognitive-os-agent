@@ -4,10 +4,17 @@ from langchain_core.messages import HumanMessage
 from planner.intent import classify_intent
 from tools.actions import open_folder
 from memory.path_resolver import resolve_path_from_text
-from memory.context import context  
+from memory.context import context
 
 
 planner_graph = build_planner_graph()
+
+
+def ask_clarification(question: str) -> str | None:
+    print(question)
+    reply = listen()
+    print("Heard:", reply)
+    return reply
 
 
 def main():
@@ -18,6 +25,10 @@ def main():
     # ===============================
     user_text = listen()
     print("Heard:", user_text)
+
+    if not user_text or not user_text.strip():
+        print("❓ I didn’t catch that.")
+        return
 
     # ===============================
     # 🧠 INTENT CLASSIFICATION
@@ -31,12 +42,17 @@ def main():
     if intent == "open":
         path = resolve_path_from_text(user_text)
 
+        # 🔁 clarification (single retry)
+        if not path:
+            follow_up = ask_clarification("❓ Which folder should I open?")
+            path = resolve_path_from_text(follow_up)
+
         # 🧠 memory fallback
         if not path:
             path = getattr(context, "last_path", None)
 
         if not path:
-            print("❓ Which folder should I open?")
+            print("❌ No folder resolved. Aborting.")
             return
 
         open_folder(path)
