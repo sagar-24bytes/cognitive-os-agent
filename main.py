@@ -10,66 +10,103 @@ from memory.context import context
 planner_graph = build_planner_graph()
 
 
-def ask_clarification(question: str) -> str | None:
-    print(question)
-    reply = listen()
-    print("Heard:", reply)
-    return reply
+def is_noise(text: str) -> bool:
+    """
+    Returns True if input is only filler / punctuation noise
+    e.g. '.', '...', ',,,'
+    """
+    stripped = text.strip()
+    if not stripped:
+        return True
+    return all(c in "., " for c in stripped)
 
 
 def main():
-    print("Personal Cognitive OS booting...")
+    print("🧠 Personal Cognitive OS booted. Say something…")
 
-    # ===============================
-    # 🎙️ PERCEPTION
-    # ===============================
-    user_text = listen()
-    print("Heard:", user_text)
+    awaiting_open_target = False
 
-    if not user_text or not user_text.strip():
-        print("❓ I didn’t catch that.")
-        return
+    while True:
+        # ===============================
+        # 🎙️ PERCEPTION
+        # ===============================
+        user_text = listen()
 
-    # ===============================
-    # 🧠 INTENT CLASSIFICATION
-    # ===============================
-    intent = classify_intent(user_text)
-    print(f"[Intent] {intent}")
+        if not user_text:
+            print("…")
+            continue
 
-    # ===============================
-    # 📂 DIRECT ACTION: OPEN FOLDER
-    # ===============================
-    if intent == "open":
-        path = resolve_path_from_text(user_text)
+        user_text = user_text.strip()
 
-        # 🔁 clarification (single retry)
-        if not path:
-            follow_up = ask_clarification("❓ Which folder should I open?")
-            path = resolve_path_from_text(follow_up)
+        # ---- NOISE FILTER (CRITICAL FIX) ----
+        if is_noise(user_text):
+            print("…")
+            continue
 
-        # 🧠 memory fallback
-        if not path:
-            path = getattr(context, "last_path", None)
+        print("Heard:", user_text)
 
-        if not path:
-            print("❌ No folder resolved. Aborting.")
-            return
+        # ===============================
+        # 🔚 EXIT CONDITION
+        # ===============================
+        normalized = user_text.lower().rstrip(".!")
+        if normalized in {"exit", "quit", "stop", "bye"}:
+            print("👋 Shutting down Cognitive OS.")
+            break
 
-        open_folder(path)
-        return
+        # ===============================
+        # 🧠 INTENT CLASSIFICATION
+        # ===============================
+        intent = classify_intent(user_text)
+        print(f"[Intent] {intent}")
 
-    # ===============================
-    # 🧩 PLANNING + EXECUTION
-    # ===============================
-    result = planner_graph.invoke({
-        "messages": [HumanMessage(content=user_text)],
-        "user_text": user_text,
-        "intent": intent,
-        "plan": {}
-    })
+        # ===============================
+        # 🧩 CLARIFICATION CONTINUATION
+        # ===============================
+        if awaiting_open_target:
+            path = resolve_path_from_text(user_text)
 
-    print("\nGenerated Plan:")
-    print(result.get("plan"))
+            if path:
+                open_folder(path)
+                awaiting_open_target = False
+                continue
+
+            print("❓ I still couldn’t identify the folder.")
+            continue
+
+        # ===============================
+        # 📂 DIRECT ACTION: OPEN FOLDER
+        # ===============================
+        if intent == "open":
+            path = resolve_path_from_text(user_text)
+
+            # 🧠 memory fallback
+            if not path:
+                path = getattr(context, "last_path", None)
+
+            if not path:
+                print("❓ Which folder should I open?")
+                awaiting_open_target = True
+                continue
+
+            open_folder(path)
+            continue
+
+        # ===============================
+        # 🧩 PLANNING + EXECUTION
+        # ===============================
+        try:
+            result = planner_graph.invoke({
+                "messages": [HumanMessage(content=user_text)],
+                "user_text": user_text,
+                "intent": intent,
+                "plan": {}
+            })
+
+            print("\nGenerated Plan:")
+            print(result.get("plan"))
+
+        except Exception as e:
+            print("⚠️ Error during execution:", e)
 
 
 if __name__ == "__main__":
