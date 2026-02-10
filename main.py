@@ -60,6 +60,14 @@ def main():
         print(f"[Intent] {intent}")
 
         # ===============================
+        # NO-ACTION / CHITCHAT
+        # ===============================
+        if intent == "no_action":
+            print("🙂 Got it.")
+            continue
+
+
+        # ===============================
         # 🧩 CLARIFICATION CONTINUATION
         # ===============================
         if awaiting_open_target:
