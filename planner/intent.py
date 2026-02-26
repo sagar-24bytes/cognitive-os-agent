@@ -4,7 +4,7 @@ def classify_intent(user_text: str | None) -> str:
     if not user_text:
         return "no_action"
 
-    text = user_text.lower().strip()
+    text = user_text.lower().strip().rstrip(".!?,")
 
     # ===============================
     # 🔚 EXIT INTENT
@@ -13,33 +13,7 @@ def classify_intent(user_text: str | None) -> str:
         return "exit"
 
     # ===============================
-    # 😶 NO-ACTION / CHITCHAT
-    # ===============================
-    NO_ACTION_PHRASES = {
-        "thank you",
-        "thanks",
-        "ok",
-        "okay",
-        "got it",
-        "hmm",
-        "hmmm",
-        "alright",
-        "cool",
-        "fine",
-        "nice",
-        "yes",
-        "yeah",
-        "yep",
-        "no",
-        "nah",
-        "...",
-    }
-
-    if text in NO_ACTION_PHRASES or len(text.split()) <= 2:
-        return "no_action"
-
-    # ===============================
-    # 🎯 ACTION INTENTS
+    # 🎯 ACTION INTENTS (CHECK FIRST)
     # ===============================
     ORGANIZE = [
         "organize", "sort", "arrange", "cleanup", "clean up"
@@ -69,6 +43,34 @@ def classify_intent(user_text: str | None) -> str:
     for word in CREATE:
         if word in text:
             return "create"
+
+    # ===============================
+    # 😶 NO-ACTION / CHITCHAT
+    # ===============================
+    NO_ACTION_PHRASES = {
+        "thank you",
+        "thanks",
+        "ok",
+        "thank you.",
+        "thanks.",
+        "okay",
+        "got it",
+        "hmm",
+        "hmmm",
+        "alright",
+        "cool",
+        "fine",
+        "nice",
+        "yes",
+        "yeah",
+        "yep",
+        "no",
+        "nah",
+        "...",
+    }
+
+    if text in NO_ACTION_PHRASES:
+        return "no_action"
 
     # ===============================
     # ❓ FALLBACK

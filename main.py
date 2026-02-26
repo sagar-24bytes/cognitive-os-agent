@@ -65,6 +65,10 @@ def main():
         if intent == "no_action":
             print("🙂 Got it.")
             continue
+        # BLOCK UNKNOWN
+        if intent == "unknown":
+            print("❓ I didn't understand that.")
+            continue
 
 
         # ===============================
