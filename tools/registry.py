@@ -1,5 +1,7 @@
 # tools/registry.py
 
+from tools.search import search_files
+
 from tools.actions import (
     scan_folder,
     create_folder,
@@ -22,3 +24,6 @@ TOOL_FUNCTIONS = {
     "move_file": move_file,
     "open_folder": open_folder,
 }
+ALLOWED_TOOLS.add("search_files")
+
+TOOL_FUNCTIONS["search_files"] = search_files

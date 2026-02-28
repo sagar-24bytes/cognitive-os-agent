@@ -3,8 +3,10 @@ from planner.graph import build_planner_graph
 from langchain_core.messages import HumanMessage
 from planner.intent import classify_intent
 from tools.actions import open_folder
+from tools.search import search_files
 from memory.path_resolver import resolve_path_from_text
 from memory.context import context
+import re
 
 
 planner_graph = build_planner_graph()
@@ -21,7 +23,41 @@ def is_noise(text: str) -> bool:
     return all(c in "., " for c in stripped)
 
 
+def extract_search_query(text: str) -> str:
+    """
+    Extract clean filename keywords from natural language.
+    Removes verbs, folder references, and punctuation.
+    """
+
+    text = text.lower()
+
+    # Remove punctuation
+    text = re.sub(r'[^\w\s\.]', ' ', text)
+
+    # Remove search verbs
+    verbs = {"search", "find", "look", "for"}
+    words = text.split()
+
+    words = [w for w in words if w not in verbs]
+
+    # Remove folder reference words
+    stop_words = {
+        "in", "inside", "under", "from",
+        "folder", "directory",
+        "agent", "test"
+    }
+
+    words = [w for w in words if w not in stop_words]
+
+    # Remove standalone extensions if separated
+    # combine pdf properly
+    query = " ".join(words)
+
+    return query.strip()
+
+
 def main():
+
     print("🧠 Personal Cognitive OS booted. Say something…")
 
     awaiting_open_target = False
@@ -49,13 +85,13 @@ def main():
         print("Heard:", user_text)
 
         # ===============================
-        # 🧠 INTENT CLASSIFICATION (AUTHORITATIVE)
+        # 🧠 INTENT CLASSIFICATION
         # ===============================
         intent = classify_intent(user_text)
         print(f"[Intent] {intent}")
 
         # ===============================
-        # 🔚 EXIT INTENT (CRITICAL FIX)
+        # 🔚 EXIT INTENT
         # ===============================
         if intent == "exit":
             print("👋 Shutting down Cognitive OS.")
@@ -76,7 +112,7 @@ def main():
             continue
 
         # ===============================
-        # 🧩 CLARIFICATION CONTINUATION
+        # CLARIFICATION CONTINUATION
         # ===============================
         if awaiting_open_target:
 
@@ -91,7 +127,7 @@ def main():
             continue
 
         # ===============================
-        # 📂 DIRECT ACTION: OPEN FOLDER
+        # OPEN FOLDER INTENT
         # ===============================
         if intent == "open":
 
@@ -110,7 +146,49 @@ def main():
             continue
 
         # ===============================
-        # 🧩 PLANNING + CONFIRMATION + EXECUTION
+        # SEARCH INTENT (NEW)
+        # ===============================
+        if intent == "search":
+
+            path = resolve_path_from_text(user_text)
+
+            # fallback to memory
+            if not path:
+                path = getattr(context, "last_path", None)
+
+            if not path:
+                print("❓ Which folder should I search in?")
+                continue
+
+            query = extract_search_query(user_text)
+
+            if not query:
+                print("❓ What should I search for?")
+                continue
+
+            print(f"Searching for '{query}' in {path}...")
+
+            try:
+                results = search_files(path, query)
+
+                if not results:
+                    print("No matching files found.")
+                else:
+                    print(f"\nFound {len(results)} match(es):\n")
+
+                    for result in results[:10]:
+                        print(result)
+
+                    if len(results) > 10:
+                        print(f"\n...and {len(results) - 10} more")
+
+            except Exception as e:
+                print("⚠️ Search failed:", e)
+
+            continue
+
+        # ===============================
+        # PLANNER + VALIDATOR + CONFIRMATION + EXECUTION
         # ===============================
         try:
 
