@@ -22,7 +22,7 @@ def resolve_path_from_text(text: str | None):
     for key, path in KNOWN_FOLDERS.items():
         if key in text:
             resolved = os.path.abspath(path)
-            context.last_path = resolved  # ✅ store safely
+            context.update(path=resolved)  # ✅ store safely
             return resolved
 
     # -------------------------------------------------

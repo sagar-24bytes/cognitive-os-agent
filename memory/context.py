@@ -1,21 +1,29 @@
-# memory/context.py
+from memory.persistent import init_db, set_memory, get_memory
+
 
 class ContextMemory:
+
     def __init__(self):
-        self.last_path = None
-        self.last_action = None
+
+        init_db()
+
+        self.last_path = get_memory("last_path")
+        self.last_action = get_memory("last_action")
 
     def update(self, *, path=None, action=None):
+
         if path:
             self.last_path = path
+            set_memory("last_path", path)
+
         if action:
             self.last_action = action
+            set_memory("last_action", action)
 
     def resolve_pronoun(self, text: str):
-        """
-        Resolve 'it / this / that' to last known path
-        """
+
         pronouns = ("it", "this", "that")
+
         words = text.lower().split()
 
         if any(p in words for p in pronouns):
@@ -24,5 +32,4 @@ class ContextMemory:
         return None
 
 
-# singleton context (important)
 context = ContextMemory()

@@ -151,7 +151,8 @@ voice/models/
 recorded.wav
 *.wav
 .wav
-
+# Persistent cognitive memory database
+memory.db
 
 # Spyder project settings
 .spyderproject
