@@ -27,6 +27,7 @@ def main():
     awaiting_open_target = False
 
     while True:
+
         # ===============================
         # 🎙️ PERCEPTION
         # ===============================
@@ -38,7 +39,9 @@ def main():
 
         user_text = user_text.strip()
 
-        # ---- NOISE FILTER (CRITICAL FIX) ----
+        # ===============================
+        # NOISE FILTER
+        # ===============================
         if is_noise(user_text):
             print("…")
             continue
@@ -46,18 +49,17 @@ def main():
         print("Heard:", user_text)
 
         # ===============================
-        # 🔚 EXIT CONDITION
-        # ===============================
-        normalized = user_text.lower().rstrip(".!")
-        if normalized in {"exit", "quit", "stop", "bye"}:
-            print("👋 Shutting down Cognitive OS.")
-            break
-
-        # ===============================
-        # 🧠 INTENT CLASSIFICATION
+        # 🧠 INTENT CLASSIFICATION (AUTHORITATIVE)
         # ===============================
         intent = classify_intent(user_text)
         print(f"[Intent] {intent}")
+
+        # ===============================
+        # 🔚 EXIT INTENT (CRITICAL FIX)
+        # ===============================
+        if intent == "exit":
+            print("👋 Shutting down Cognitive OS.")
+            break
 
         # ===============================
         # NO-ACTION / CHITCHAT
@@ -65,16 +67,19 @@ def main():
         if intent == "no_action":
             print("🙂 Got it.")
             continue
-        # BLOCK UNKNOWN
+
+        # ===============================
+        # UNKNOWN INTENT SAFETY BLOCK
+        # ===============================
         if intent == "unknown":
             print("❓ I didn't understand that.")
             continue
-
 
         # ===============================
         # 🧩 CLARIFICATION CONTINUATION
         # ===============================
         if awaiting_open_target:
+
             path = resolve_path_from_text(user_text)
 
             if path:
@@ -89,9 +94,10 @@ def main():
         # 📂 DIRECT ACTION: OPEN FOLDER
         # ===============================
         if intent == "open":
+
             path = resolve_path_from_text(user_text)
 
-            # 🧠 memory fallback
+            # memory fallback
             if not path:
                 path = getattr(context, "last_path", None)
 
@@ -104,9 +110,10 @@ def main():
             continue
 
         # ===============================
-        # 🧩 PLANNING + EXECUTION
+        # 🧩 PLANNING + CONFIRMATION + EXECUTION
         # ===============================
         try:
+
             result = planner_graph.invoke({
                 "messages": [HumanMessage(content=user_text)],
                 "user_text": user_text,

@@ -13,8 +13,8 @@ def record(seconds=5, filename="recorded.wav"):
     sd.wait()
     write(filename, fs, audio)
 
-def listen():
-    record(5)
+def listen(seconds=5):
+    record(seconds)
     segments, info = model.transcribe("recorded.wav", language="en")
-    text = " ".join([seg.text for seg in segments]) 
+    text = " ".join([seg.text for seg in segments])
     return text.strip()

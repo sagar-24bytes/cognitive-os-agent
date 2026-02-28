@@ -9,7 +9,10 @@ def classify_intent(user_text: str | None) -> str:
     # ===============================
     # 🔚 EXIT INTENT
     # ===============================
-    if text.rstrip(".!") in {"exit", "quit", "stop", "bye"}:
+    normalized = text.rstrip(".!?,")
+    EXIT_WORDS = {"exit", "quit", "stop", "bye"}
+
+    if any(word in normalized.split() for word in EXIT_WORDS):
         return "exit"
 
     # ===============================
