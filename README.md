@@ -1,6 +1,6 @@
 # Personal Cognitive OS
 
-An autonomous, goal-driven, voice-based AI system that plans, executes, remembers, and learns from user interactions to manage and organize a personal computer.
+An autonomous, goal-driven, voice-based agentic AI system that plans, executes, remembers, and learns from user interactions to manage and organize a personal computer.
 
 This is not a chatbot.  
 This is an agentic operating system layer.
@@ -11,42 +11,83 @@ This is an agentic operating system layer.
 
 Personal Cognitive OS listens to natural language voice commands and:
 
-1. Understands user intent using an LLM (Gemini)
-2. Decomposes goals into structured execution plans
-3. Normalizes and grounds plans into real system actions
-4. Executes tools on the local machine
-5. (Planned) Stores long-term memory and reflects on outcomes
+1. Understands user intent using a hybrid intent classifier and LLM planner  
+2. Decomposes goals into structured execution plans  
+3. Normalizes and grounds plans into safe, real system actions  
+4. Requires explicit user confirmation before executing filesystem changes  
+5. Executes tools locally using a secure allow-listed registry  
+6. Stores persistent memory across sessions using SQLite  
+7. Remembers context such as last accessed folder for natural follow-up commands  
 
 ---
 
 ## Core Architecture
+
 ```text
+Perception Layer
 Voice (Whisper – local, offline)
 ↓
-Planner (Gemini + Structured Output)
+Intent Layer
+Intent classifier (fast routing)
 ↓
-Plan Normalizer / Grounder
+Memory Layer
+Context memory + Persistent SQLite memory
 ↓
-Executor (Defensive Local Tools)
+Planning Layer
+Gemini LLM + Structured JSON planning (LangGraph)
 ↓
-Memory + Reflection (WIP)
-
+Validation Layer
+Plan normalization, grounding, and safety enforcement
+↓
+Confirmation Layer
+User approval checkpoint (voice or keyboard)
+↓
+Execution Layer
+Defensive local tools (filesystem operations)
+↓
+Feedback Layer
+Execution results and context update
 ```
 
 ---
 
 ## Current Features
 
-- Whisper (offline, local speech recognition)
+### Voice & Perception
+- 🎙️ Offline voice recognition using Faster-Whisper
+- Noise filtering and speech normalization
+- Fully local speech processing
 
-- 🧠 LLM-based goal planner (Gemini)
-- 📋 Structured JSON planning (Pydantic)
-- 🔧 Tool normalization & argument grounding
-- 🛡️ Defensive tool execution (safe handling of no-op and invalid plans)
-- 🧭 OS-safe path grounding (LLM never executes raw paths)
+### Intent & Planning
+- 🧠 Hybrid intent classification (fast routing + LLM planning)
+- 📋 Structured JSON planning using Gemini + Pydantic
+- 🧩 Multi-step task decomposition using LangGraph
 
-- 🧪 Dry-run execution mode
-- ⚙️ Real system execution layer
+### Memory System
+- 🧠 Session memory for contextual commands ("open it")
+- 💾 Persistent memory using SQLite (`memory.db`)
+- 🔁 Cross-session context retention
+- 🧭 Automatic last-path tracking and reuse
+
+### Safety & Validation
+- 🛡️ Strict tool allow-list registry
+- 🧭 Path grounding (prevents hallucinated filesystem paths)
+- 🔧 Argument normalization and correction
+- ❌ Blocks unknown or unsafe operations automatically
+
+### Confirmation Layer (Critical Safety Feature)
+- ✅ Explicit confirmation required before execution
+- 🎙️ Voice confirmation ("yes/no")
+- ⌨️ Keyboard fallback confirmation
+- 🔁 Retry handling for unclear speech
+- 📊 Impact preview showing operations and affected locations
+
+### Execution Layer
+- 📂 Folder organization by file type
+- 📁 Folder creation
+- 📄 File movement and categorization
+- 📂 Folder opening
+- ⚙️ Safe local filesystem execution
 
 ---
 
@@ -56,68 +97,184 @@ User says:
 
 > "Organize my downloads folder"
 
-System generates:
+System generates structured plan:
 
 ```json
 {
   "goal": "Organize my downloads folder",
   "steps": [
     {"tool": "scan_folder", "args": {"path": "~/Downloads"}},
-    {"tool": "create_folder", "args": {"path": "~/Downloads/Documents"}},
+    {"tool": "create_folder", "args": {"path": "~/Downloads/documents"}},
     {"tool": "move_file", "args": {
       "source_directory": "~/Downloads",
-      "destination_directory": "~/Downloads/Documents",
+      "destination_directory": "~/Downloads/documents",
       "file_pattern": "*.pdf"
     }}
   ]
 }
 ```
 
-Then executes locally.
+Agent shows confirmation preview:
+
+```text
+This will execute 10 operation(s)
+It will move 5 file(s)
+
+Affected locations:
+~/Downloads
+~/Downloads/documents
+```
+
+After approval, execution runs safely.
+
+---
+
+## Natural Language Context Example
+
+```text
+User: Open my agent test folder
+Agent: Opens folder
+
+(restart agent)
+
+User: Open it
+Agent: Opens same folder using persistent memory
+```
+
+---
 
 ## Tech Stack
 
 - Python 3.11+
+- Faster-Whisper (offline speech recognition)
+- LangGraph (execution graph orchestration)
+- LangChain (LLM integration)
+- Gemini API (planning)
+- Pydantic (structured output validation)
+- SQLite (persistent memory)
+- OS filesystem tools (safe local execution)
 
-- 🎙️ Offline, high-accuracy voice recognition (Whisper – local)
+---
 
+## Project Structure
 
-- LangGraph
+```text
+cognitive-os-agent/
 
-- LangChain
+voice/          # speech perception
+planner/        # intent + LLM planning graph
+tools/          # execution tools and validator
+memory/         # context and persistent memory
+main.py         # cognitive loop entry point
+memory.db       # persistent memory database (ignored in git)
+```
 
-- Gemini API
+---
 
-- Pydantic
+## Safety Architecture
 
-- SQLite (memory layer - WIP)
+The agent enforces multiple safety layers:
 
-- Vision
+```text
+Intent filtering
+↓
+Tool allow-list enforcement
+↓
+Path grounding
+↓
+Plan validation
+↓
+User confirmation
+↓
+Execution
+```
 
-### This project aims to become a personal autonomous operating system layer:
+Execution cannot occur without passing all safety gates.
 
-- self-improving agent
+---
 
-- long-term memory
+## Current Capabilities
 
-- reflection loops
+Supported commands:
 
-- tool learning
+```text
+Organize my downloads folder
+Open my documents folder
+Open it
+Exit
+```
 
-- minimal human micromanagement
+The agent understands contextual references and maintains state across sessions.
 
-### Inspired by:
+---
 
-- AutoGPT
+## Persistent Memory
 
-- BabyAGI
+The agent uses SQLite for durable memory storage:
 
-- OpenAI function calling
+```text
+memory.db
+```
 
-- Cognitive architectures
+Stores:
+
+- last_path
+- last_action
+- future: preferences, history, learning data
+
+This enables cross-session cognitive continuity.
+
+---
 
 ## Status
 
-- Actively under development with stable end-to-end voice → action pipeline.
-  
-- Memory, reflection, and self-correction layers are currently being built.
+Stable cognitive agent baseline achieved with:
+
+- End-to-end voice → intent → planning → confirmation → execution pipeline
+- Persistent memory support
+- Safety validation and confirmation layer
+- Context-aware execution
+
+---
+
+## Roadmap
+
+### Phase 1 (In Progress)
+
+- File search capability
+- Enhanced confirmation with file previews
+- Improved intent resolution
+
+### Phase 2
+
+- Long-term memory expansion
+- Task history and reflection
+- Context-aware reasoning
+
+### Phase 3
+
+- Fully autonomous multi-step goal execution
+- Learning from user behavior
+- Self-improving planning
+
+---
+
+## Vision
+
+This project aims to become a true cognitive operating system layer capable of:
+
+- Persistent memory
+- Autonomous task planning
+- Safe execution
+- Context awareness
+- Continuous learning
+
+---
+
+## Inspired by
+
+- AutoGPT
+- BabyAGI
+- OpenAI function calling
+- Cognitive architectures
+- Autonomous agent systems
